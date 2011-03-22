@@ -1,0 +1,7 @@
+create table markers(
+id int not null auto_increment primary key,
+name varchar(70) not null,
+address varchar(90) not null,
+lat float(10,6),
+lon float(10,6)
+) ENGINE=MYISAM ;

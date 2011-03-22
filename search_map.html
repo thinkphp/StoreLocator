@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+  <title>Search Store Locator</title>
+  <link rel="stylesheet" href="reset.css" type="text/css">
+  <link rel="stylesheet" href="base.css" type="text/css">
+  <link rel="stylesheet" href="style.css" type="text/css">
+  <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true&amp;key=ABQIAAAAHFKkG2s1GKwMWvhsxH6UGhT31Sqdr1iMbgcfgd36_cHBTNb4GxTM-5GlCegdpzSsulvA2GKSzWJsmA" type="text/javascript"></script>
+  <script type="text/javascript">
+
+     var map, geocoder;
+
+     /* 
+        when DOM is ready the load the map 
+        and added handler for event click
+     */
+     window.onload = function() {
+
+         if(GBrowserIsCompatible()) {
+
+             geocoder = new GClientGeocoder();
+
+             map = new GMap2(document.getElementById('map'));
+
+             map.addControl(new GSmallMapControl());
+
+             map.addControl(new GMapTypeControl());
+
+             map.setCenter(new GLatLng(40, -100), 4);
+
+         }//end if
+
+         /* add handler for event click on button 'search' */
+         $('search').onclick = function() {
+                searchLocations();
+         }
+
+     }//end function load
+
+     function searchLocations(){
+
+         var address = document.getElementById('addressInput').value;
+
+         geocoder.getLatLng(address,function(latlong){
+
+                  if(!latlong) {
+
+                      alert(address + ' not found!');
+
+                  } else {
+
+                     map.clearOverlays();
+                     var blueIcon = new GIcon(G_DEFAULT_ICON);
+                     blueIcon.image = "http://chart.apis.google.com/chart?chst=d_map_pin_icon&chld=cafe|996600";
+                     blueIcon.shadow = "http://chart.apis.google.com/chart?chst=d_map_pin_shadow";
+                     var m = new GMarker(latlong,{icon: blueIcon});
+                     m.bindInfoWindowHtml('Here I am');  
+                     map.addOverlay(m);
+
+                     searchLocationsNear(latlong); 
+                  }
+         });
+     }//end function searchLocations
+
+     function searchLocationsNear(center) {
+
+         var radius = document.getElementById('radiusSelect').value;
+
+         var searchUrl = 'generate-xml.php?lat=' + center.lat() + '&lon=' + center.lng() + '&radius=' + radius;
+
+         /* do request AJAX, grab xml file */
+         GDownloadUrl(searchUrl,function(data){
+
+              var xml = GXml.parse(data);
+
+              var markers = xml.documentElement.getElementsByTagName('marker');
+
+              /* map.clearOverlays(); */
+
+              var sidebar = document.getElementById('sidebar');
+
+              sidebar.innerHTML = '';
+
+              if(markers.length == 0) {
+
+                 sidebar.innerHTML = 'No results found.';
+
+                 map.setCenter(new GLatLng(40, -100), 4); 
+
+                 return; 
+              }//endif
+
+              var bounds = new GLatLngBounds();
+ 
+              for(var i=0; i<markers.length; i++) {
+
+                  var name = markers[i].getAttribute('name');
+
+                  var address = markers[i].getAttribute('address');
+
+                  var distance = parseFloat(markers[i].getAttribute('distance'));
+
+                  var point = new GLatLng(parseFloat(markers[i].getAttribute('lat')),parseFloat(markers[i].getAttribute('lon')))
+
+                  var marker = createMarker(point,name,address);
+
+                  map.addOverlay(marker); 
+
+                  var sidebarEntry = createSidebarEntry(marker, name, address, distance);
+
+                  sidebar.appendChild(sidebarEntry); 
+
+                  bounds.extend(point);
+
+              }//endfor
+
+              map.setCenter(bounds.getCenter(),map.getBoundsZoomLevel(bounds));
+
+         });//end AJAX
+
+     }//end function searchLocationsNear
+
+     function createMarker(point,name,address) {
+
+          var marker = new GMarker(point);
+
+          var html = '<b>'+ name + '</b><br/>' + address;
+
+          GEvent.addListener(marker,'click', function(){
+
+                 marker.openInfoWindowHtml(html);
+          });  
+
+        return marker; 
+
+     }//end function createMarker
+
+     function createSidebarEntry(marker,name,address,distance) {
+
+          var div = document.createElement('div');
+
+          var html = '<b>' + name + '</b> ('+ distance.toFixed(1)+ ')<br/>' + address;
+  
+              div.innerHTML = html;
+
+              div.style.cursor = 'pointer';
+
+              div.style.marginBottom = '5px';
+
+              GEvent.addDomListener(div,'click', function(){
+
+                     GEvent.trigger(marker,'click'); 
+              }); 
+
+              GEvent.addDomListener(div,'mouseover', function(){
+
+                     div.style.backgroundColor = '#eee';
+              }); 
+
+
+              GEvent.addDomListener(div,'mouseout', function(){
+
+                     div.style.backgroundColor = '#fff';
+              }); 
+
+        return div; 
+     }//end function createSidebarEntry
+
+     function $(id){return document.getElementById(id);}
+  
+</script>
+</head>
+<body>
+<div id="doc" class="yui-t7">
+   <div id="hd" role="banner"><h1>Search Store Locator</h1></div>
+   <div id="bd" role="main">
+	<div class="yui-g">
+
+<!-- start form for input -->
+<div id="form" name="form">
+<label for="addressInput">Address:</label>
+<input type="text" id="addressInput" name="addressInput" />
+<label for="radiusSelect">radius:</label>
+<select id="radiusSelect">
+<option value="25">25</option>
+<option value="100">100</option>
+<option value="200">200</option>
+</select>
+<input type="button" id="search" name="search" value="search Location" />
+</div>
+<!-- end form for input -->
+
+<!-- start container -->
+<div id="container">
+<table>
+<tr>
+     <td width="200" valign="top"><div id="sidebar" style="overflow:auto;font-size: 11px;height: 400px"></div></td>
+     <td><div id="map"></div></td>
+</tr>
+</table>
+</div>
+<!-- end container -->
+
+	</div>
+	</div>
+   <div id="ft" role="contentinfo"><p>written by <a href="http://thinkphp.ro">Adrian Statescu</a> using Google Maps API</p></div>
+</div>
+</body>
+</html>

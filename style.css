@@ -1,0 +1,11 @@
+    html,body{background:#fff;font-family:helvetica,calibri,verdana,arial,sans-serif;}   
+    #hd h1{text-shadow:1px 3px 3px #ccc;margin:0 0 .5em 0;color:#5199D9;font-size: 300%}
+    #doc{background: #fff;border: 1em border #fff;padding: 5px}
+    input[type=text]{-moz-border-radius:5px;-webkit-border-radius:5px;border:1px solid #333;padding:3px;}
+    input[id=search]{-moz-border-radius:5px;-webkit-border-radius:5px;border:1px solid #5199D9;background:#5199D9;padding: 2px;font-weight: bold;color: #fff;cursor: pointer}
+    input[id=search]:hover{background: #fff;color:#5199D9}
+    div#form{font-size:100%;margin:1em 0;color: #444}
+    #container{width:800px;font-family: helvetica,arial,verdana,sans-serif;font-size: 11px;border: 1px solid #999;}
+    #map{overflow:hidden;width: 600px;height:400px;}
+    #ft p{text-align:left;font-size:90%;color: #999;margin-top: 7px}    
+    #ft p a{color: #ccc}
